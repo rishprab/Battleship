@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Play — Battleship</title>
+<style>
+  :root {
+    --bg: #0a1420;
+    --panel: #132538;
+    --panel2: #1a3049;
+    --line: #274160;
+    --text: #e9eef5;
+    --muted: #7f93aa;
+    --accent: #4fc3f7;
+    --gold: #e0b04b;
+    --hit: #ff5252;
+    --miss: #6fb8e0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, #0e1c2e 0%, var(--bg) 70%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 20px 16px 60px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  a.back {
+    display: inline-block;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+  }
+  h1 { font-size: 1.5rem; color: var(--accent); margin: 0 0 6px 0; }
+  p.sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 22px 0; line-height: 1.5; }
+  h2 { font-size: 1.1rem; color: var(--accent); margin: 30px 0 12px 0; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card p { margin: 0 0 8px 0; font-size: 0.92rem; line-height: 1.55; }
+  .card p:last-child { margin-bottom: 0; }
+
+  .fleet-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .fleet-row:last-child { border-bottom: none; }
+  .fleet-row .bar { display: flex; gap: 3px; flex-shrink: 0; }
+  .fleet-row .bar span { width: 16px; height: 16px; border-radius: 3px; background: var(--accent); }
+  .fleet-row .info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .fleet-row .name { font-weight: 700; font-size: 0.92rem; }
+  .fleet-row .desc { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 38px;
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--panel2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps li strong { color: var(--text); }
+
+  .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.9rem; }
+  .legend-row:last-child { margin-bottom: 0; }
+  .legend-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot.miss { background: var(--miss); }
+  .legend-dot.hit { background: var(--hit); box-shadow: 0 0 6px 1px rgba(255,82,82,0.6); }
+  .legend-ghost {
+    width: 20px; height: 14px; border-radius: 3px; flex-shrink: 0;
+    background: rgba(255,82,82,0.16); border: 2px solid rgba(255,82,82,0.85);
+  }
+  .legend-row .label { color: var(--muted); }
+
+  .tip { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-top: 10px; }
+  .kbd {
+    display: inline-block; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 5px; padding: 1px 7px; font-size: 0.82rem; color: var(--gold); font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="javascript:window.close()">← Close this tab</a>
+  <h1>🌊 How to Play Battleship</h1>
+  <p class="sub">Two fleets. One ocean. Somewhere out there, your opponent is staring at an empty grid too, wondering exactly where you've hidden your Carrier.</p>
+
+  <h2>The fleet</h2>
+  <div class="card">
+    <div class="fleet-row">
+      <span class="bar"><span></span><span></span><span></span><span></span><span></span></span>
+      <span class="info"><span class="name">Carrier — 5 cells</span><span class="desc">The biggest, slowest target in the water. Hardest to hide, hardest to lose.</span></span>
+    </div>
+    <div class="fleet-row">
+      <span class="bar"><span></span><span></span><span></span><span></span></span>
+      <span class="info"><span class="name">Battleship — 4 cells</span><span class="desc">Twin gun turrets, front and back. The one your opponent will be hunting for.</span></span>
+    </div>
+    <div class="fleet-row">
+      <span class="bar"><span></span><span></span><span></span></span>
+      <span class="info"><span class="name">Cruiser — 3 cells</span><span class="desc">A solid all-rounder. Easy to overlook while you're chasing bigger targets.</span></span>
+    </div>
+    <div class="fleet-row">
+      <span class="bar"><span></span><span></span><span></span></span>
+      <span class="info"><span class="name">Submarine — 3 cells</span><span class="desc">Rides low in the water. Deceptively easy to place somewhere sneaky.</span></span>
+    </div>
+    <div class="fleet-row">
+      <span class="bar"><span></span><span></span></span>
+      <span class="info"><span class="name">Destroyer — 2 cells</span><span class="desc">Small, fast, and the easiest ship in the fleet to completely forget about.</span></span>
+    </div>
+  </div>
+
+  <h2>Placing your fleet</h2>
+  <div class="card">
+    <ol class="steps">
+      <li><strong>Drag each ship</strong> from the list onto your grid. Tap <span class="kbd">Rotate</span> before dragging to flip it between horizontal and vertical.</li>
+      <li><strong>Rearrange freely.</strong> Nothing locks in the moment you place it — drag a ship again to move it, rotate it in place, or tap ✕ to pull it back off the board entirely. Overlapping another ship or going off the grid is never allowed.</li>
+      <li><strong>On mobile, dragging can be fiddly.</strong> Tap the 🕹️ button on any placed ship to select it, then nudge it one cell at a time with the arrow pad — often faster than dragging on a small screen.</li>
+      <li><strong>Not feeling picky?</strong> Tap <span class="kbd">🎲 Randomize</span> to scatter the whole fleet at once, then tweak from there.</li>
+      <li><strong>Ready for Battle</strong> locks your fleet in for good. No more changes once both players are ready.</li>
+    </ol>
+  </div>
+
+  <h2>Taking your turn</h2>
+  <div class="card">
+    <ol class="steps">
+      <li>When it's your turn, the banner at the top turns gold and invites you to <strong>tap it</strong> — that opens the targeting screen.</li>
+      <li><strong>Tap a cell</strong> to select it (it highlights gold). Tap it again to change your mind before committing.</li>
+      <li>Tap <strong>🎯 Fire!</strong> to actually send the shot. The popup stays open so you can watch the result — close it yourself with ✕ whenever you're ready.</li>
+      <li>Miss, hit, or sink — the result plays out right there on the grid, and if it's your own fleet taking the hit, you'll see it happen for real in the 3D view too.</li>
+    </ol>
+  </div>
+
+  <h2>Reading the targeting grid</h2>
+  <div class="card">
+    <div class="legend-row"><span class="legend-dot miss"></span><span class="label">Miss — nothing there.</span></div>
+    <div class="legend-row"><span class="legend-dot hit"></span><span class="label">Hit — you found part of a ship.</span></div>
+    <div class="legend-row"><span class="legend-ghost"></span><span class="label">Sunk — a red outline reveals the whole ship once every cell of it is hit, so you know exactly where <em>not</em> to keep wasting shots.</span></div>
+  </div>
+
+  <h2>Your own waters</h2>
+  <div class="card">
+    <p>Your fleet is the only one ever rendered in 3D — the enemy's ships stay completely hidden until the moment you actually sink one. If you get hit, you'll see real fire catch on the exact spot, spreading further as more of that ship takes damage.</p>
+    <p>Tap the 🗺️ button for a precise 2D readout of your fleet's status at any time — every ship shown as an outline, turning red cell by cell as it's hit. The 3D view is for the spectacle; this is for the exact truth.</p>
+    <p class="tip">Swipe left or right on the 3D view to look around your fleet from any angle, and use the +/− buttons to zoom in or pull back.</p>
+  </div>
+
+  <h2>Winning</h2>
+  <div class="card">
+    <p>The instant every cell of every enemy ship is hit, their fleet is destroyed and the game ends immediately. Down to their last Destroyer? Down to your last one too? It genuinely comes down to who fires next.</p>
+  </div>
+
+  <p class="tip" style="margin-top:24px; text-align:center;">Fire true. The ocean doesn't give second chances.</p>
+
+</div>
+</body>
+</html>
