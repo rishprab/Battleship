@@ -190,34 +190,44 @@ const BOARD_LOOKAT_X = 0.5, BOARD_LOOKAT_Z = 0.5;
 
 function enableOrbitControl(board) {
   // Derive the starting radius/height/angle from wherever the camera was initially placed,
-  // so orbiting picks up seamlessly from the existing default view rather than needing
-  // its own separately-maintained position.
+  // so orbiting (and zooming) picks up seamlessly from the existing default view rather
+  // than needing its own separately-maintained position.
   const dx = board.camera.position.x - BOARD_LOOKAT_X;
   const dz = board.camera.position.z - BOARD_LOOKAT_Z;
-  const radius = Math.sqrt(dx * dx + dz * dz);
-  const height = board.camera.position.y;
+  const baseRadius = Math.sqrt(dx * dx + dz * dz);
+  const baseHeight = board.camera.position.y;
   let angle = Math.atan2(dx, dz);
+  let zoom = 1; // 1 = default distance; <1 = zoomed in (closer + lower), >1 = zoomed out
+  const MIN_ZOOM = 0.55, MAX_ZOOM = 1.6, ZOOM_STEP = 0.12;
   let dragging = false;
   let lastX = 0;
 
   function updateCameraPosition() {
+    const radius = baseRadius * zoom;
     board.camera.position.x = BOARD_LOOKAT_X + radius * Math.sin(angle);
     board.camera.position.z = BOARD_LOOKAT_Z + radius * Math.cos(angle);
-    board.camera.position.y = height;
+    board.camera.position.y = baseHeight * zoom;
     board.camera.lookAt(BOARD_LOOKAT_X, 0, BOARD_LOOKAT_Z);
   }
+
+  board.zoomIn = () => { zoom = Math.max(MIN_ZOOM, zoom - ZOOM_STEP); updateCameraPosition(); };
+  board.zoomOut = () => { zoom = Math.min(MAX_ZOOM, zoom + ZOOM_STEP); updateCameraPosition(); };
 
   const canvas = board.canvas;
   canvas.style.touchAction = "none"; // otherwise a finger-swipe scrolls the page instead of orbiting
   canvas.style.cursor = "grab";
+  canvas.draggable = false;
+  canvas.addEventListener("dragstart", (e) => e.preventDefault()); // stop the browser's native drag-and-drop from hijacking a mouse drag on the canvas
 
   canvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
     dragging = true;
     lastX = e.clientX;
     canvas.style.cursor = "grabbing";
   });
   window.addEventListener("pointermove", (e) => {
     if (!dragging) return;
+    e.preventDefault();
     const deltaX = e.clientX - lastX;
     lastX = e.clientX;
     angle -= deltaX * 0.008; // direct 1:1-feeling drag, no momentum/inertia for this first version
